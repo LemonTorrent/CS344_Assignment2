@@ -9,31 +9,47 @@
 #include <sys/types.h>
 #include <time.h>
 
+
 #define PREFIX "movies_"
 #define SUFFIX ".csv"
+#define DIRPREFIX "yarbroni.movies."
 
+/* struct for movie information */
+struct movie
+{
+    char *title;
+    char *year;
+    char *language;
+    char *ratingValue;
+    struct movie *next;
+};
+
+/*
+*   Gets user input on whether to quit or continue
+*/
 int userInput(){
     int continueChoice = 0;
 
-    // do {
-        printf("1. Select file to process\n");
-        printf("2. Exit the program\n\n");
 
-        printf("Enter a choice 1 or 2: ");
-        scanf("%d", &continueChoice);
+    printf("1. Select file to process\n");
+    printf("2. Exit the program\n\n");
 
+    printf("Enter a choice 1 or 2: ");
+    scanf("%d", &continueChoice);
 
-        
-        //printf("\n\n")
-
-    // } while (continueChoice != 2);
+    // Action choice 2 is already taken by functionality in later code, so change to 0.
     if (continueChoice == 2){
         continueChoice = 0;
     }
+
+    // Return action choice
     return continueChoice;
 
 }
 
+/*
+*   Gets user input on which file to process
+*/
 int processFileInput() {
     int choice = 0;
 
@@ -218,15 +234,7 @@ char* openName(int *choice){
     return 0;
 }
 
-/* struct for movie information */
-struct movie
-{
-    char *title;
-    char *year;
-    char *language;
-    char *ratingValue;
-    struct movie *next;
-};
+
 
 /* Parse the current line which is space delimited and create a
 *  student struct with the data in this line
@@ -358,41 +366,77 @@ void printMovieList(struct movie *list)
     }
 }
 
+struct movie* createFile(struct movie* list, char* dirName){
 
-struct movie *readFile(char fileName[]){
+    char* newFilePath [256];
+    int file_descriptor;
+
+    strcpy(newFilePath, dirName);
+
+    strcat(newFilePath, "/");
+    strcat(newFilePath, list->year);
+    strcat(newFilePath, ".csv");
+
+    printf("fileName = %s\n", dirName);
+
+    file_descriptor = open(newFilePath, O_WRONLY | O_CREAT |O_APPEND, 00640);
+    write(file_descriptor, list->title, strlen(list->title));
+    write(file_descriptor, "\n", 1);
+
+    close(file_descriptor);
+
+    return list->next;
+}
+
+void freeList(struct movie* head)
+{
+   struct movie* tmp;
+
+   while (head != NULL)
+    {
+       tmp = head;
+       head = head->next;
+       free(tmp);
+    }
+
+}
+
+struct movie *createDir(struct movie* list){//char fileName[]){
     // printf("Inside readFile\n");
     int numMovies = 0;
     int file_descriptor;
-    struct movie *list = processFile(fileName);
+    // struct movie *list = processFile(fileName);
     struct dirent *aDir;
     printMovieList(list);
-
-    //rmdir("yarbroni.movies");
-
-    //DIR * currDir = opendir("yarbroni.movies");
-
-    // while((aDir = readdir(currDir)) != NULL){
-    //    remove("text.txt");
-    //}
-
-    // return 0;
+    char dirName [256];
+    char buffer [256];
 
     char* pathname = "./yarbroni.movies2";
-    char* newFilePath = "./yarbroni.movies2/test.csv";
+    // char* newFilePath = "./yarbroni.movies2/test.csv";
+    char* newFilePath [256];
 
-    int check = mkdir(pathname, 0700); // mode_t "rwxr-x---"); Check that this is correct
-    DIR * currDir = opendir(pathname);
+    int randomInt = random();
+
+    strcpy(dirName, DIRPREFIX);
+    sprintf(buffer, "%i", randomInt);
+    strcat(dirName, buffer);
+
+    printf("Created directory with name %s\n", dirName);
+
+    //return;
+
+    int check = mkdir(dirName, 0755); // mode_t "rwxr-x---"); Check that this is correct
+    DIR * currDir = opendir(dirName);
     
 
     printf("Opening dir\n");
     if (file_descriptor == -1){
-		printf("open() failed on \"%s\"\n", newFilePath);
+		printf("open() failed on \"%s\"\n", dirName);
 		perror("Error");
 		exit(1);
 	}
 	
-
-    file_descriptor = open(newFilePath, O_WRONLY | O_CREAT|O_TRUNC, 00600);
+    file_descriptor = open(newFilePath, O_WRONLY | O_CREAT|O_APPEND, 00640);
 
     close(newFilePath);
 
@@ -402,7 +446,11 @@ struct movie *readFile(char fileName[]){
 
     closedir(currDir);
 
-
+    while (list != NULL){
+        list = createFile(list, dirName);
+    }
+    
+    
 
     // delete list after creating files
 
@@ -450,7 +498,9 @@ int main(int argc, char *argv[]) {
             choice = userInput();
         }
         
-
+        if (choice == 0){
+            return 0;
+        }
         if (choice != 0){
             choice = processFileInput();
         }
@@ -464,7 +514,11 @@ int main(int argc, char *argv[]) {
         }
 
         if (choice != -1) {
+            list = processFile(file);
+            printMovieList(list);
+            createDir(list);
             // list = readFile(file);
+            freeList(list);
             NULL;
         }
 
