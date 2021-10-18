@@ -30,13 +30,19 @@ struct movie
 int userInput(){
     int continueChoice = 0;
 
+    do {
+        printf("1. Select file to process\n");
+        printf("2. Exit the program\n\n");
 
-    printf("1. Select file to process\n");
-    printf("2. Exit the program\n\n");
+        printf("Enter a choice 1 or 2: ");
+        scanf("%d", &continueChoice);
 
-    printf("Enter a choice 1 or 2: ");
-    scanf("%d", &continueChoice);
+        // If invalid input, print error message
+        if (continueChoice != 1 && continueChoice != 2) {
+            printf("Invalid input. Please enter 1 or 2\n\n");
+        }
 
+    } while (continueChoice != 1 && continueChoice != 2);
     // Action choice 2 is already taken by functionality in later code, so change to 0.
     if (continueChoice == 2){
         continueChoice = 0;
@@ -48,34 +54,45 @@ int userInput(){
 }
 
 /*
-*   Gets user input on which file to process
+*   Gets user input on which file to process. 
 */
 int processFileInput() {
     int choice = 0;
 
-    printf("\nWhich file do you want to process?\n");
-    printf("Enter 1 to pick the largest file\n");
-    printf("Enter 2 to pick the smallest file\n");
-    printf("Enter 3 to specify the name of a file\n\n");
+    do {
+        printf("\nWhich file do you want to process?\n");
+        printf("Enter 1 to pick the largest file\n");
+        printf("Enter 2 to pick the smallest file\n");
+        printf("Enter 3 to specify the name of a file\n\n");
 
-    printf("Enter a choice from 1 to 3: ");
-    scanf("%d", &choice);
+        printf("Enter a choice from 1 to 3: ");
+        scanf("%d", &choice);
+
+        // If invalid input, print error message
+        if (choice < 1 || choice > 3){
+            printf("Invalid input. Please enter number between 1 and 3\n");
+        }
+
+    // Loop until valid input
+    } while (choice < 1 || choice > 3);
+
+    // Then return
     return choice;
 }
 
+/*
+*   Finds the largest file in the current directory
+*   Much of this function is from the directory page in class (more specifically, the Getting 
+*   File and Directory Meta-Data example)
+*/
 char* largest(){
     // Open the current directory
     DIR* currDir = opendir(".");
     struct dirent *aDir;
-    time_t lastModifTime;
+    // time_t lastModifTime;
     struct stat dirStat;
     int i = 0;
     char entryName[256];
-
-    char *largestName;
-    int largestLength = 0;
-    int fd;
-    int howMany;
     int lLength;
 
     // Go through all the entries
@@ -85,58 +102,39 @@ char* largest(){
             // Get meta-data for the current entry
             stat(aDir->d_name, &dirStat);  
 
-            printf("length = %d\n", dirStat.st_size);
-            printf("name = %s\n", aDir->d_name);
-
             // Use the difftime function to get the time difference between the current value of lastModifTime and the st_mtime value of the directory entry
             if(i == 0 || (dirStat.st_size > lLength)){
                 lLength = dirStat.st_size;
-                printf("length = %d\n", lLength);
+                // printf("length = %d\n", lLength);
                 memset(entryName, '\0', sizeof(entryName));
                 strcpy(entryName, aDir->d_name);
 
             }
-
-            /*
-            // We first open a file for read write, creating it if necessary and truncating it if it already exists
-            fd = open(entryName, O_WRONLY | O_CREAT|O_TRUNC, 00600);
-                if (fd == -1){
-                    printf("open() failed on \"%s\"\n", entryName);
-                    perror("Error");
-                    exit(1);
-                }
-
-            // We open the file for reading
-            close(entryName);
-            
-            // We allocate a buffer to read from the file
-            char* readBuffer = malloc(50 * sizeof(char));
-            howMany = read(fd, readBuffer, 2000);
-            printf("read %d bytes from the file\n", howMany);
-            
-            printf("%s\n", readBuffer);
-
-            */
 
             i++;
         }
         }
     // Close the directory
     closedir(currDir);
-    printf("The last file/directory starting with the prefix \"%s\" modified in the current directory is %s\n", PREFIX, entryName);
+    printf("Now processing the chosen file named %s\n", entryName);
     return entryName;
 }
 
+/*
+*   Finds the smallest file in the current directory
+*   Much of this function is from the directory page in class (more specifically, the Getting 
+*   File and Directory Meta-Data example)
+*/
 char* smallest(){
     // Open the current directory
     DIR* currDir = opendir(".");
     struct dirent *aDir;
-    time_t lastModifTime;
+    // time_t lastModifTime;
     struct stat dirStat;
     int i = 0;
     char entryName[256];
     int sLength;
-    char sName[256];
+    // char sName[256];
 
     // Go through all the entries
     while((aDir = readdir(currDir)) != NULL){
@@ -144,16 +142,11 @@ char* smallest(){
     if(strncmp(PREFIX, aDir->d_name, strlen(PREFIX)) == 0){
         // Get meta-data for the current entry
         stat(aDir->d_name, &dirStat);  
-
-        //printf(dirStat.st_dev);
-        // sLength = dirStat.st_size;
-
-        //printf("length = %d\n", dirStat.st_size);
-        
+       
 
         // Use the difftime function to get the time difference between the current value of lastModifTime and the st_mtime value of the directory entry
         if(i == 0 || (dirStat.st_size < sLength)){
-            printf("yes");
+            // printf("yes");
             sLength = dirStat.st_size;
             memset(entryName, '\0', sizeof(entryName));
             strcpy(entryName, aDir->d_name);
@@ -165,16 +158,15 @@ char* smallest(){
     }
     // Close the directory
     closedir(currDir);
-    printf("The smallest file/directory starting with the prefix \"%s\" modified in the current directory is %s\n", PREFIX, entryName);
+    printf("Now processing the chosen file named %s\n", entryName);
 
 
     return entryName;
 }
 
-char* openNameInput() {
-
-}
-
+/*
+*   Finds the file with the indicated name in the current directory
+*/
 char* openName(int *choice){
     DIR* currDir = opendir(".");
     struct dirent *aDir;
@@ -184,60 +176,34 @@ char* openName(int *choice){
     char entryName[256];
 
 
-    char str[] = "movies_sample_1.csv";
+    // char str[] = "movies_sample_1.csv";
 
 	int file_descriptor;
 	//char* newFilePath = "nonExistingFile.txt";
     char newFilePath [256];
 
+    // Get file name as input
     printf("Enter the complete file name: ");
     scanf("%s", newFilePath);
 
-    // printf("New file = %s\n", newFilePath);
-
-  // TO DO: set the flags argument so that the attempt to open the file for reading and writing fails
-  // What is the error message printed by perror?
+    // Check if file exists
 	file_descriptor = open(newFilePath, S_IRUSR | S_IWUSR);
 	if (file_descriptor == -1){
-		// printf("open() failed on \"%s\"\n", newFilePath);
         printf("The file %s was not found. Try again\n", newFilePath);
-		//perror("Error");
+
+        // if file is not found, change the value of choice to -1
         *choice = file_descriptor;
-		//exit(1);
+		
 	}
 	
-	// printf("file_descriptor = %d\n", file_descriptor);
-	
 	return newFilePath;
-
-    return 0;
-
-    // Go through all the entries
-    while((aDir = readdir(currDir)) != NULL){
-
-        if(strncmp(str, aDir->d_name, strlen(str)) == 0){
-            // Get meta-data for the current entry
-            stat(aDir->d_name, &dirStat);  
-
-            // Use the difftime function to get the time difference between the current value of lastModifTime and the st_mtime value of the directory entry
-            if(i == 0 || difftime(dirStat.st_mtime, lastModifTime) > 0){
-                lastModifTime = dirStat.st_mtime;
-                memset(entryName, '\0', sizeof(entryName));
-                strcpy(entryName, aDir->d_name);
-            }
-            i++;
-        }
-    }
-    // Close the directory
-    closedir(currDir);
-    printf("The last file/directory starting with the prefix \"%s\" modified in the current directory is %s\n", str, entryName);
-    return 0;
 }
 
 
 
 /* Parse the current line which is space delimited and create a
 *  student struct with the data in this line
+*  This code was adapted from the provided student example from assignment 1.
 */
 struct movie *createStudent(char *currLine)
 {
@@ -259,12 +225,6 @@ struct movie *createStudent(char *currLine)
     // The next token is the language
     token = strtok_r(NULL, ",", &saveptr);
 
-    // printf(token);
-    // char *strTemp = calloc(strlen(token) + 1, sizeof(char));
-    // strcpy(strTemp, token);
-
-    // printf(strTemp);
-
     // provided code:
     currMovie->language = calloc(strlen(token) + 1, sizeof(char));
     strcpy(currMovie->language, token);
@@ -285,10 +245,10 @@ struct movie *createStudent(char *currLine)
 /*
 * Return a linked list of students by parsing data from
 * each line of the specified file.
+* This code originates from the Student example in assignment 1.
 */
 struct movie *processFile(char *filePath)
 {
-    // printf("Inside processFile\n");
     // Open the specified file for reading only
     FILE *movieFile = fopen(filePath, "r");
 
@@ -314,9 +274,6 @@ struct movie *processFile(char *filePath)
 		
         // Get a new student node corresponding to the current line
         struct movie *newNode = createStudent(currLine);
-        // printf("After createStudent\n");
-		// *numMovies = *numMovies + 1;
-		
 
         // Is this the first node in the linked list?
         if (head == NULL)
@@ -335,16 +292,14 @@ struct movie *processFile(char *filePath)
         }
     }
     free(currLine);
-    fclose(movieFile);
-
-    // printf("\n\n printMovie:\n");
-    
+    fclose(movieFile);    
 
     return head;
 }
 
 /*
 * This function prints an individual movie and its data.
+* It also originates from the student example from assignment 1
 */
 void printMovie(struct movie* aMovie){
   printf("%s, %s, %s, %s\n", aMovie->title,
@@ -356,6 +311,7 @@ void printMovie(struct movie* aMovie){
 
 /*
 * Print the linked list of movies
+* It also originates from the student example from assignment 1
 */
 void printMovieList(struct movie *list)
 {
@@ -366,70 +322,82 @@ void printMovieList(struct movie *list)
     }
 }
 
+/*
+* Creates a file based on year if it doesn't exist, then writes to open file
+*/
 struct movie* createFile(struct movie* list, char* dirName){
 
     char* newFilePath [256];
     int file_descriptor;
 
+    // Create file name starting with yarbroni.movies
     strcpy(newFilePath, dirName);
 
     strcat(newFilePath, "/");
     strcat(newFilePath, list->year);
     strcat(newFilePath, ".csv");
 
-    printf("fileName = %s\n", dirName);
-
+    // Open/create file
     file_descriptor = open(newFilePath, O_WRONLY | O_CREAT |O_APPEND, 00640);
+
+    // Write title of current movie to file
     write(file_descriptor, list->title, strlen(list->title));
+
+    // Write newline char
     write(file_descriptor, "\n", 1);
 
+    // Close file
     close(file_descriptor);
 
+    // return pointer to next movie
     return list->next;
 }
 
-void freeList(struct movie* head)
-{
-   struct movie* tmp;
+/*
+*   Free memory in linked list
+*/
+void freeList(struct movie* head) {
+   struct movie* temp;
 
    while (head != NULL)
     {
-       tmp = head;
+       temp = head;
        head = head->next;
-       free(tmp);
+       free(temp);
     }
-
+    return;
 }
 
+/*
+*   Create directory with random int
+*/
 struct movie *createDir(struct movie* list){//char fileName[]){
-    // printf("Inside readFile\n");
-    int numMovies = 0;
+    // Sets randomness
+    srand(time(0));
+
     int file_descriptor;
-    // struct movie *list = processFile(fileName);
     struct dirent *aDir;
-    printMovieList(list);
+    // printMovieList(list);
     char dirName [256];
     char buffer [256];
 
-    char* pathname = "./yarbroni.movies2";
-    // char* newFilePath = "./yarbroni.movies2/test.csv";
     char* newFilePath [256];
 
-    int randomInt = random();
+    // Get random integer between 0 and 99999
+    int randomInt = random() % 100000;
 
+    // Assemble directory name
     strcpy(dirName, DIRPREFIX);
     sprintf(buffer, "%i", randomInt);
     strcat(dirName, buffer);
 
     printf("Created directory with name %s\n", dirName);
 
-    //return;
-
-    int check = mkdir(dirName, 0755); // mode_t "rwxr-x---"); Check that this is correct
+    int check = mkdir(dirName, 0755);
     DIR * currDir = opendir(dirName);
     
 
-    printf("Opening dir\n");
+    // printf("Opening dir\n");
     if (file_descriptor == -1){
 		printf("open() failed on \"%s\"\n", dirName);
 		perror("Error");
@@ -440,71 +408,42 @@ struct movie *createDir(struct movie* list){//char fileName[]){
 
     close(newFilePath);
 
-    while((aDir = readdir(currDir)) != NULL){
-        printf("%s  %lu\n", aDir->d_name, aDir->d_ino);    
-    }
-
     closedir(currDir);
 
+    // Create files or update files with list info
     while (list != NULL){
         list = createFile(list, dirName);
     }
     
-    
-
-    // delete list after creating files
-
     return 0;
 }
 
-
-
+/*
+*   Main function, runs code functionality
+*/
 int main(int argc, char *argv[]) {
     int choice = 0;
 
     char* file;
     struct movie *list;
-    /*
-    file = smallest();
 
-    printf("Name = %s\n", smallest());
-    printf("Returned file name is %s\n", file);
-    file = largest();
-    printf("Returned file name is %s\n", file);
-    return 0;
-    */
-
-    char fileName [] = "movies_sample_1.csv";
-
-    //largest();
-
-    /*
-    file = openName(&choice);
-    printf("after open name\n");
-
-    printf("openName = %s\n", file);
-    printf("choice = %d\n", choice);
-    */
-    //printf("Processing file %s\n", fileName);
-
-    //readFile(fileName);
-
-    
-
-    //return 0;
-
+    // Repeat while 
     do {
         if (choice != -1){
             choice = userInput();
         }
         
+        // If user chooses to exit, return
         if (choice == 0){
             return 0;
         }
+
+        // If choice isn't to return, ask user for what type of file input
         if (choice != 0){
             choice = processFileInput();
         }
 
+        // Call functionality from user choice
         if (choice == 1){
             file = largest();
         } else if (choice == 2){
@@ -513,22 +452,17 @@ int main(int argc, char *argv[]) {
             file = openName(&choice);
         }
 
+        // If file input isn't bad, process file
         if (choice != -1) {
             list = processFile(file);
-            printMovieList(list);
             createDir(list);
-            // list = readFile(file);
             freeList(list);
             NULL;
         }
-
-//        printf("openName = %s\n", file);
-//        printf("choice = %d\n", choice);
 
         printf("\n");
 
     } while (choice != 0);
     
-
 	return 0;
 }
